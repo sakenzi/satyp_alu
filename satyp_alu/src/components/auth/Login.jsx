@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(''); // Сохраним уведомление, если нужно
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,10 +18,49 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Добавьте здесь вашу логику входа
-    console.log('Данные входа:', formData);
+    setError('');
+    setSuccess('');
+    
+    try {
+      console.log('Отправляемые данные:', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      const response = await fetch('http://127.0.0.1:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Неверные учетные данные');
+      }
+
+      const data = await response.json();
+      console.log('Полный ответ от сервера:', data);
+
+      const accessToken = data.token || data.accessToken; // Проверяем оба варианта
+      if (accessToken) {
+        localStorage.setItem('access_token', accessToken);
+        console.log('Успешный вход, токен сохранен:', accessToken);
+        navigate('/'); // Перенаправляем на главную страницу после успешного входа
+        setSuccess('Вход выполнен успешно!'); // Можно оставить уведомление, если нужно
+      } else {
+        throw new Error('Токен не получен. Ответ: ' + JSON.stringify(data));
+      }
+    } catch (error) {
+      setError(error.message || 'Произошла ошибка при входе');
+      console.error('Ошибка входа:', error);
+    }
   };
 
   return (
@@ -28,6 +71,13 @@ const Login = () => {
         </h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <p className="text-red-500 text-sm text-center mb-4">{error}</p>
+          )}
+          {success && (
+            <p className="text-green-500 text-sm text-center mb-4">{success}</p>
+          )}
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email *

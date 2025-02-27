@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    token: ''
+    birth_date: ''
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,10 +20,36 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Добавьте здесь вашу логику регистрации
-    console.log('Данные регистрации:', formData);
+    setError('');
+    
+    try {
+      const response = await axios.post('http://127.0.0.1:3000/auth/register', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        birth_date: formData.birth_date
+      }); 
+
+      console.log('Полный ответ от сервера:', response.data); 
+
+      const { token } = response.data; 
+      if (token) {
+        localStorage.setItem('access_token', token); 
+        console.log('Регистрация успешна, токен сохранён:', token);
+        navigate('/'); 
+      } else {
+        throw new Error('Токен не получен. Ответ: ' + JSON.stringify(response.data));
+      }
+    } catch (err) {
+      let errorMessage = 'Ошибка регистрации';
+      if (err.response) {
+        errorMessage = err.response.data.message || err.response.data.errors?.join(', ') || errorMessage;
+      }
+      setError(errorMessage);
+      console.error('Ошибка регистрации:', err);
+    }
   };
 
   return (
@@ -28,7 +58,9 @@ const Register = () => {
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Создайте аккаунт
         </h2>
-        
+
+        {error && <p className="text-red-500 text-center">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -75,6 +107,21 @@ const Register = () => {
               required
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Введите пароль"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700">
+              Дата рождения
+            </label>
+            <input
+              type="date"
+              id="birth_date"
+              name="birth_date"
+              value={formData.birth_date}
+              onChange={handleChange}
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Выберите дату"
             />
           </div>
 

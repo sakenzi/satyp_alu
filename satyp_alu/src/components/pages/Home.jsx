@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { FiUser, FiLogOut } from 'react-icons/fi';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token'); 
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       console.log('Поиск:', searchQuery);
-      // Здесь можно добавить логику поиска (например, API-запрос)
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token'); 
+    navigate('/login');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          Добро пожаловать!
-        </h1>
-        
-        <form onSubmit={handleSearch} className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700">
+      <header className="bg-white shadow-md p-4 flex justify-between items-center">
+        <form onSubmit={handleSearch} className="flex items-center space-x-2 w-1/2">
           <input
             type="text"
             value={searchQuery}
@@ -34,16 +44,27 @@ const Home = () => {
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-gray-600">
-          Нет аккаунта?{' '}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Зарегистрируйтесь здесь
-          </a>{' '}
-          или{' '}
-          <a href="/login" className="text-blue-600 hover:underline">
-            войдите
-          </a>
-        </p>
+        <div className="flex space-x-4">
+          <Link
+            to="/profile"
+            className="text-blue-600 hover:underline text-sm font-medium flex items-center"
+          >
+            <FiUser className="mr-1 h-4 w-4" /> Профиль
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="text-red-600 hover:underline text-sm font-medium flex items-center"
+          >
+            <FiLogOut className="mr-1 h-4 w-4" /> Выйти
+          </button>
+        </div>
+      </header>
+
+      <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-800">
+          </h1>
+        </div>
       </div>
     </div>
   );
